@@ -1,0 +1,29 @@
+{
+  "name": "blockchain",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "deploy:local": "npx hardhat run scripts/quick-deploy.js",
+    "deploy:sepolia": "npx hardhat run scripts/deployToken.js --network sepolia",
+    "deploy:robust": "npx hardhat run scripts/deployTokenRobust.js --network sepolia",
+    "deploy:pool": "npx hardhat run scripts/deploySubsidyPool.js",
+    "deploy:pool:sepolia": "npx hardhat run scripts/deploySubsidyPool.js --network sepolia",
+    "compile": "npx hardhat compile",
+    "clean": "npx hardhat clean",
+    "node": "npx hardhat node",
+    "console": "npx hardhat console"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^6.1.0",
+    "hardhat": "^2.26.3"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^5.4.0",
+    "dotenv": "^17.2.1"
+  }
+}

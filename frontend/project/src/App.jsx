@@ -14,13 +14,13 @@ function App() {
       <div className="app">
         <Navigation />
         <main className="main-content">
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/introduction" element={<Introduction />} />
-            <Route path="/upload" element={<DocumentUpload />} />
-            <Route path="/dashboard" element={<CertifierDashboard />} />
-            <Route path="/results" element={<Results />} />
-          </Routes>
+                  <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/introduction" element={<Introduction />} />
+          <Route path="/upload" element={<DocumentUpload />} />
+          <Route path="/dashboard" element={<CertifierDashboard />} />
+          <Route path="/results" element={<Results />} />
+        </Routes>
         </main>
       </div>
     </Router>

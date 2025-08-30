@@ -15,11 +15,22 @@ function Introduction() {
 
   useEffect(() => {
     const connected = localStorage.getItem("walletConnected");
-    if (connected) {
+    const walletAddress = localStorage.getItem("walletAddress");
+    
+    if (connected && walletAddress) {
       setIsWalletConnected(true);
       setFormData((prev) => ({
         ...prev,
-        walletAddress: localStorage.getItem("walletAddress") || ""
+        walletAddress: walletAddress
+      }));
+    } else {
+      // Clear any stale data
+      localStorage.removeItem("walletConnected");
+      localStorage.removeItem("walletAddress");
+      setIsWalletConnected(false);
+      setFormData((prev) => ({
+        ...prev,
+        walletAddress: ""
       }));
     }
   }, []);
@@ -46,16 +57,40 @@ function Introduction() {
     }
   };
 
+  const disconnectWallet = () => {
+    setFormData((prev) => ({ ...prev, walletAddress: "" }));
+    setIsWalletConnected(false);
+    localStorage.removeItem("walletConnected");
+    localStorage.removeItem("walletAddress");
+  };
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const resetForm = () => {
+    setFormData({
+      fullName: "",
+      walletAddress: "",
+      plantCapacity: "",
+      userType: "producer"
+    });
+    setIsWalletConnected(false);
+    localStorage.removeItem("walletConnected");
+    localStorage.removeItem("walletAddress");
+  };
+
   const handleRegister = async (e) => {
     e.preventDefault();
 
-    if (!formData.fullName || !formData.walletAddress) {
-      alert("Please fill in all fields");
+    if (!formData.fullName) {
+      alert("Please enter your full name");
+      return;
+    }
+
+    if (!isWalletConnected || !formData.walletAddress) {
+      alert("Please connect your wallet first");
       return;
     }
 
@@ -65,26 +100,34 @@ function Introduction() {
     }
 
     try {
-      if (formData.userType === "producer") {
-        const res = await axios.post("http://localhost:5000/api/producers", {
-          name: formData.fullName,
-          wallet: formData.walletAddress,
-          plantCapacity: Number(formData.plantCapacity)
-        });
-        alert(`Producer Registered! ID: ${res.data.id}`);
-      } else {
-        await axios.post("http://localhost:5000/api/admins", {
-          name: formData.fullName,
-          wallet: formData.walletAddress
-        });
-        alert("Admin registered!");
+              if (formData.userType === "producer") {
+          const res = await axios.post("http://localhost:5000/api/producers", {
+            name: formData.fullName,
+            wallet: formData.walletAddress,
+            plantCapacity: Number(formData.plantCapacity)
+          });
+          alert(`Producer Registered Successfully! ID: ${res.data.id}`);
+          
+          // Save producer data to localStorage for document upload
+          const producerData = {
+            fullName: formData.fullName,
+            walletAddress: formData.walletAddress,
+            plantCapacity: formData.plantCapacity,
+            producerId: res.data.id
+          };
+          localStorage.setItem('producerData', JSON.stringify(producerData));
+          
+          // Reset form after successful registration
+          resetForm();
+          
+          // Navigate to upload page for producers
+          navigate("/upload");
+        } else {
+        // For now, just show success message for certifier registration
+        // TODO: Implement certifier registration API endpoint
+        alert("Certifier registration feature coming soon!");
+        return;
       }
-
-      localStorage.setItem("registrationData", JSON.stringify(formData));
-      localStorage.setItem("userType", formData.userType);
-      localStorage.setItem("registrationComplete", "true");
-
-      navigate(formData.userType === "admin" ? "/certifier" : "/final");
     } catch (err) {
       alert("Registration failed: " + err.message);
     }
@@ -93,9 +136,9 @@ function Introduction() {
   return (
     <div className="intro-page">
       <div className="intro-card">
-        <h1 className="intro-title">Green Hydrogen Subsidy DApp</h1>
+        <h1 className="intro-title">Producer Registration</h1>
         <p className="intro-subtitle">
-          Register your plant to access automated subsidy disbursement
+          Connect your wallet and register your hydrogen production facility
         </p>
 
         <form onSubmit={handleRegister} className="registration-form">
@@ -110,8 +153,8 @@ function Introduction() {
               className="form-select"
               required
             >
-              <option value="producer">Producer</option>
-              <option value="admin">Admin/Certifier</option>
+              <option value="producer">Hydrogen Producer</option>
+              <option value="admin">Certifier/Admin</option>
             </select>
           </div>
 
@@ -144,10 +187,10 @@ function Introduction() {
               />
               <button
                 type="button"
-                onClick={connectWallet}
+                onClick={isWalletConnected ? disconnectWallet : connectWallet}
                 className={`wallet-btn ${isWalletConnected ? "connected" : ""}`}
               >
-                {isWalletConnected ? "Connected" : "Connect Wallet"}
+                {isWalletConnected ? "Disconnect" : "Connect Wallet"}
               </button>
             </div>
           </div>
@@ -155,16 +198,16 @@ function Introduction() {
           {/* Plant Capacity */}
           {formData.userType === "producer" && (
             <div className="form-group">
-              <label htmlFor="plantCapacity">Plant Capacity (MW)</label>
+              <label htmlFor="plantCapacity">Plant Capacity (kg/day)</label>
               <input
                 type="number"
                 id="plantCapacity"
                 name="plantCapacity"
                 value={formData.plantCapacity}
                 onChange={handleInputChange}
-                placeholder="Enter capacity in megawatts"
+                placeholder="Enter daily hydrogen production capacity"
                 min="0"
-                step="0.1"
+                step="0.01"
                 required
               />
             </div>
@@ -172,8 +215,8 @@ function Introduction() {
 
           <button type="submit" className="register-btn">
             {formData.userType === "admin"
-              ? "Register as Admin"
-              : "Register Plant"}
+              ? "Register as Certifier"
+              : "Register Producer"}
           </button>
         </form>
       </div>
@@ -291,6 +334,8 @@ function Introduction() {
         .register-btn:hover {
           background: #1e40af;
         }
+
+
       `}</style>
     </div>
   );

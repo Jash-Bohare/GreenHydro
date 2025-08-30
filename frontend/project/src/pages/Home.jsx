@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 function Home() {
   const features = [
@@ -28,11 +29,19 @@ function Home() {
     <div className="page">
       <div className="container">
         <div className="hero-section">
-          <h1>Welcome to CertifyChain</h1>
+          <h1>Welcome to GreenHydro</h1>
           <p className="hero-subtitle">
-            A blockchain-powered document certification platform that streamlines 
+            A blockchain-powered hydrogen production subsidy platform that streamlines 
             the verification process while maintaining security and transparency.
           </p>
+          <div className="hero-actions">
+            <Link to="/introduction" className="cta-button primary">
+              Register as Producer
+            </Link>
+            <Link to="/upload" className="cta-button secondary">
+              Submit Documents
+            </Link>
+          </div>
         </div>
 
         {/* Features Grid */}

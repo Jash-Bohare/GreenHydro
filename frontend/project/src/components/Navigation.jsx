@@ -6,18 +6,17 @@ function Navigation() {
 
   const navItems = [
     { path: '/', label: 'Home', icon: '' },
-    { path: '/introduction', label: 'Introduction', icon: '' },
+    { path: '/introduction', label: 'Register', icon: '' },
     { path: '/upload', label: 'Upload Document', icon: '' },
     { path: '/dashboard', label: 'Certifier Dashboard', icon: '' },
     { path: '/results', label: 'Results', icon: '' }
-    
   ];
 
   return (
     <nav className="navigation">
       <div className="nav-container">
         <div className="nav-brand">
-          <h2>CertifyChain</h2>
+          <h2>GreenHydro</h2>
         </div>
         <ul className="nav-menu">
           {navItems.map((item) => (

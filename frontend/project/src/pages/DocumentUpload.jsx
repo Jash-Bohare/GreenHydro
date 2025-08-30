@@ -1,11 +1,22 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 function DocumentUpload() {
   const [selectedFile, setSelectedFile] = useState(null);
   const [textInput, setTextInput] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [uploadMethod, setUploadMethod] = useState('file');
-  const [result, setResult] = useState(null); // To display model results
+  const [result, setResult] = useState(null);
+  const [producerInfo, setProducerInfo] = useState(null);
+  const [documentType, setDocumentType] = useState('production_report');
+  const [description, setDescription] = useState('');
+
+  useEffect(() => {
+    // Get producer info from localStorage
+    const producerData = localStorage.getItem('producerData');
+    if (producerData) {
+      setProducerInfo(JSON.parse(producerData));
+    }
+  }, []);
 
   const handleFileChange = (event) => {
     const file = event.target.files[0];
@@ -19,6 +30,13 @@ function DocumentUpload() {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+
+    if (!producerInfo) {
+      alert('Please register as a producer first before uploading documents. You will be redirected to the registration page.');
+      // Redirect to registration page
+      window.location.href = '/introduction';
+      return;
+    }
 
     if (uploadMethod === 'file' && !selectedFile) {
       alert('Please select a PDF file to upload.');
@@ -34,29 +52,47 @@ function DocumentUpload() {
 
     try {
       const formData = new FormData();
+      
+      // Add document file or text
       if (uploadMethod === 'file') {
-        formData.append('file', selectedFile);
+        formData.append('document', selectedFile);
       } else {
-        formData.append('text', textInput);
+        // Create a text file from input
+        const textBlob = new Blob([textInput], { type: 'text/plain' });
+        const textFile = new File([textBlob], 'document.txt', { type: 'text/plain' });
+        formData.append('document', textFile);
       }
 
-      // Send the data to the backend API
-      const response = await fetch('http://127.0.0.1:5000/upload_pdf', {
+      // Add metadata
+      formData.append('producerName', producerInfo.fullName);
+      formData.append('producerWallet', producerInfo.walletAddress);
+      formData.append('documentType', documentType);
+      formData.append('description', description);
+
+      // Send to our backend API
+      const response = await fetch('http://localhost:5000/api/documents/upload', {
         method: 'POST',
-        body: formData, // Sending FormData to handle file upload
+        body: formData,
       });
 
       const data = await response.json();
-      setIsProcessing(false);
-      setResult(data.result); // Display model's result after processing
-
-      // Reset form
-      setSelectedFile(null);
-      setTextInput('');
-      document.getElementById('file-input').value = '';
+      
+      if (response.ok) {
+        alert(`Document uploaded successfully! ID: ${data.id}`);
+        setResult({ success: true, message: data.message, fileName: data.fileName });
+        
+        // Reset form
+        setSelectedFile(null);
+        setTextInput('');
+        setDescription('');
+        document.getElementById('file-input').value = '';
+      } else {
+        throw new Error(data.error || 'Upload failed');
+      }
     } catch (error) {
+      alert('Upload failed: ' + error.message);
+    } finally {
       setIsProcessing(false);
-      alert('An error occurred while processing your document.');
     }
   };
 
@@ -66,6 +102,26 @@ function DocumentUpload() {
         <div className="upload-header">
           <h1>Document Upload</h1>
           <p>Submit your document for blockchain certification and verification</p>
+          
+          {producerInfo && (
+            <div className="producer-info">
+              <h3>Producer Information</h3>
+              <div className="producer-details">
+                <p><strong>Name:</strong> {producerInfo.fullName}</p>
+                <p><strong>Wallet:</strong> <span className="wallet-address">{producerInfo.walletAddress}</span></p>
+                <p><strong>Plant Capacity:</strong> {producerInfo.plantCapacity} kg/day</p>
+              </div>
+              <button 
+                onClick={() => {
+                  localStorage.removeItem('producerData');
+                  setProducerInfo(null);
+                }}
+                className="clear-producer-btn"
+              >
+                Clear Producer Data
+              </button>
+            </div>
+          )}
         </div>
 
         <div className="upload-container">
@@ -82,6 +138,36 @@ function DocumentUpload() {
             >
               Text Input
             </button>
+          </div>
+
+          {/* Document Type and Description */}
+          <div className="form-group">
+            <label htmlFor="documentType">Document Type</label>
+            <select
+              id="documentType"
+              value={documentType}
+              onChange={(e) => setDocumentType(e.target.value)}
+              className="form-select"
+              required
+            >
+              <option value="production_report">Production Report</option>
+              <option value="compliance_document">Compliance Document</option>
+              <option value="financial_statement">Financial Statement</option>
+              <option value="technical_specification">Technical Specification</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="description">Description (Optional)</label>
+            <textarea
+              id="description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Brief description of the document"
+              className="form-textarea"
+              rows="3"
+            />
           </div>
 
           <form onSubmit={handleSubmit} className="upload-form">
